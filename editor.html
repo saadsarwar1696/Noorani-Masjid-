@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masjid Times Editor</title>
+<style>
+:root{--bg:#dde0b8;--card:#fff;--ink:#1a1a1a;--line:#d0d0d0;--cur:#858f36;--red:#c62828}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif;padding:16px;max-width:560px;margin-left:auto;margin-right:auto}
+h1{font-size:22px;margin:4px 0 2px;text-align:center}
+.sub{text-align:center;font-size:14px;margin:0 0 14px;min-height:20px}
+.card{background:var(--card);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.25);padding:12px 14px;margin-bottom:14px}
+h2{font-size:17px;margin:0 0 8px;color:#4a5014}
+.row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row label{flex:1;font-weight:700;font-size:15px;min-width:0}
+select,input{font:inherit;font-size:17px;padding:8px;border:2px solid var(--cur);border-radius:8px;background:#fff;color:#000}
+select{max-width:118px;font-size:15px;padding:8px 4px}
+input[type=time]{width:122px;padding:8px 6px}
+input[type=number]{width:72px}
+.hide{display:none}
+button{font:inherit;font-size:17px;font-weight:700;padding:12px 14px;border-radius:10px;border:2px solid var(--cur);background:var(--cur);color:#fff;width:100%;margin-top:8px}
+button.alt{background:#fff;color:#4a5014}
+button:disabled{opacity:.5}
+pre{background:#f4f4f4;border-radius:8px;padding:10px;font-size:14px;overflow:auto;margin:6px 0 0}
+details{margin-top:6px}
+summary{font-weight:700;cursor:pointer;padding:6px 0}
+.note{font-size:13px;color:#444;line-height:1.45;margin:6px 0}
+.ok{color:#1b6e2a;font-weight:700}.err{color:var(--red);font-weight:700}
+a{color:#1a56a8}
+</style>
+</head>
+<body>
+<h1>Noorani Masjid &ndash; Times</h1>
+<p class="sub" id="status">Loading current times&hellip;</p>
+
+<div class="card"><h2>Jamaat times</h2><div id="rows"></div></div>
+<div class="card"><h2>Juma (Friday)</h2><div id="juma"></div></div>
+
+<div class="card">
+  <h2>Save</h2>
+  <button id="save">Save to GitHub</button>
+  <button id="copy" class="alt">Copy times.json text</button>
+  <button id="open" class="alt">Open times.json on GitHub</button>
+  <button id="reload" class="alt">Reload from GitHub</button>
+  <details>
+    <summary>Preview of times.json</summary>
+    <pre id="out"></pre>
+  </details>
+  <details id="tokbox">
+    <summary>One-tap save setup (optional)</summary>
+    <p class="note">Paste your GitHub token once. It is saved only on this phone and is never part of the page. Without it, use <b>Copy</b>, then <b>Open times.json on GitHub</b>, paste, and commit.</p>
+    <input id="tok" type="password" placeholder="GitHub token" style="width:100%" autocomplete="off">
+    <button id="savetok" class="alt">Save token on this phone</button>
+    <button id="deltok" class="alt">Remove token from this phone</button>
+    <p class="note" id="tokstate"></p>
+  </details>
+</div>
+
+<script>
+var O="saadsarwar1696",R="Noorani-Masjid-",B="main",P="times.json";
+var API="https://api.github.com/repos/"+O+"/"+R+"/contents/"+P;
+var EDIT_URL="https://github.com/"+O+"/"+R+"/edit/"+B+"/"+P;
+var ROWS=[["fajr","Fajr"],["zohar","Zohar"],["asr","Asr"],["maghrib","Maghrib"],["isha","Isha"]];
+var JUMA=[["khutba","Khutba (main time)"],["khutba1","Khutba 1"],["khutba2","Khutba 2"],["khutba3","Khutba 3"],["khutba4","Khutba 4"]];
+var ALL=ROWS.concat(JUMA);
+var state={};
+var $=function(id){return document.getElementById(id)};
+function pad(n){return (n<10?"0":"")+n}
+function hint(k){return k==="fajr"?"05:00":"13:00"}
+function p12(v,cur){
+  v=String(v).trim().toLowerCase();
+  var m=/^(\d{1,2})[:.\s]?(\d{2})\s*([ap])?\.?m?\.?$/.exec(v);
+  if(!m)return"";
+  var h=+m[1],n=+m[2];
+  if(n>59)return"";
+  if(m[3]){if(h<1||h>12)return"";h=h%12;if(m[3]==="p")h+=12}
+  else if(h>=13||h===0){if(h>23)return""}
+  else{var c=/^(\d{1,2}):(\d{2})$/.exec(cur||"");var pm=c?(+c[1]*60+ +c[2])>=720:true;h=h%12;if(pm)h+=12}
+  return pad(h)+":"+pad(n);
+}
+function readVal(k,v){
+  v=String(v==null?"":v).trim();
+  if(!v)return{mode:"off",time:"",rel:5};
+  if(/^\+\d{1,3}$/.test(v)){return k.indexOf("khutba")===0?{mode:"off",time:"",rel:5}:{mode:"rel",time:"",rel:+v.slice(1)}}
+  var t=p12(v,hint(k));
+  return t?{mode:"time",time:t,rel:5}:{mode:"off",time:"",rel:5};
+}
+function fmt(k,hhmm){
+  var a=hhmm.split(":"),h=+a[0],mm=a[1],pm=h>=12,want=(k!=="fajr"),h12=h%12||12;
+  return pm===want?(h12+":"+mm):(h12+":"+mm+(pm?" pm":" am"));
+}
+function valueOut(k){
+  var s=state[k];
+  if(!s||s.mode==="off")return"";
+  if(s.mode==="rel")return"+"+(parseInt(s.rel,10)||0);
+  return s.time?fmt(k,s.time):"";
+}
+function toJSON(){
+  var lines=ALL.map(function(r){return ' "'+r[0]+'": "'+valueOut(r[0])+'"'});
+  return "{\n"+lines.join(",\n")+"\n}\n";
+}
+function refreshOut(){$("out").textContent=toJSON()}
+function build(){
+  function mk(list,box,allowRel){
+    list.forEach(function(r){
+      var k=r[0],row=document.createElement("div");row.className="row";
+      var lab=document.createElement("label");lab.textContent=r[1];
+      var sel=document.createElement("select");
+      sel.innerHTML='<option value="time">At time</option>'+(allowRel?'<option value="rel">After start</option>':'')+'<option value="off">Not set</option>';
+      var t=document.createElement("input");t.type="time";
+      var n=document.createElement("input");n.type="number";n.min="0";n.max="120";
+      row.appendChild(lab);row.appendChild(sel);row.appendChild(t);row.appendChild(n);box.appendChild(row);
+      function show(){var s=state[k];sel.value=s.mode;t.className=s.mode==="time"?"":"hide";n.className=s.mode==="rel"?"":"hide";t.value=s.time||"";n.value=s.rel;}
+      sel.onchange=function(){state[k].mode=sel.value;show();refreshOut()};
+      t.onchange=function(){state[k].time=t.value;refreshOut()};
+      n.oninput=function(){state[k].rel=n.value;refreshOut()};
+      row._show=show;
+    });
+  }
+  mk(ROWS,$("rows"),true);mk(JUMA,$("juma"),false);
+}
+function showAll(){
+  Array.prototype.forEach.call(document.querySelectorAll(".row"),function(r){r._show()});
+  refreshOut();
+}
+function setStatus(msg,cls){var s=$("status");s.textContent=msg;s.className="sub "+(cls||"")}
+function b64d(s){return decodeURIComponent(escape(atob(s.replace(/\n/g,""))))}
+function b64e(s){return btoa(unescape(encodeURIComponent(s)))}
+function applyJSON(j){
+  ALL.forEach(function(r){state[r[0]]=readVal(r[0],j[r[0]])});
+  showAll();
+}
+function load(){
+  setStatus("Loading current times\u2026");
+  fetch(API+"?ref="+B+"&t="+Date.now()).then(function(r){if(!r.ok)throw new Error("api "+r.status);return r.json()})
+  .then(function(d){applyJSON(JSON.parse(b64d(d.content)));setStatus("Current times loaded from GitHub.","ok")})
+  .catch(function(){
+    return fetch(P+"?t="+Date.now()).then(function(r){if(!r.ok)throw new Error("site "+r.status);return r.json()})
+    .then(function(j){applyJSON(j);setStatus("Loaded from the website copy (may be a few minutes old).","ok")})
+  })
+  .catch(function(){ALL.forEach(function(r){state[r[0]]=readVal(r[0],"")});showAll();setStatus("Could not load current times. You can still type new ones.","err")});
+}
+function token(){try{return localStorage.getItem("mt")||""}catch(e){return""}}
+function tokState(){$("tokstate").textContent=token()?"A token is saved on this phone.":"No token saved on this phone."}
+function save(){
+  var tk=token();
+  if(!tk){setStatus("No token yet. Use Copy, or set up one-tap save below.","err");$("tokbox").open=true;return}
+  var btn=$("save");btn.disabled=true;setStatus("Saving\u2026");
+  var h={"Authorization":"Bearer "+tk,"Accept":"application/vnd.github+json"};
+  fetch(API+"?ref="+B+"&t="+Date.now(),{headers:h}).then(function(r){
+    if(r.status===404)return{};
+    if(!r.ok)throw new Error("read "+r.status);
+    return r.json();
+  }).then(function(d){
+    var body={message:"Update times from editor",content:b64e(toJSON()),branch:B};
+    if(d&&d.sha)body.sha=d.sha;
+    return fetch(API,{method:"PUT",headers:h,body:JSON.stringify(body)});
+  }).then(function(r){
+    if(!r.ok)throw new Error("write "+r.status);
+    setStatus("Saved! The TV updates within about 5 minutes.","ok");
+  }).catch(function(e){
+    var m=String(e.message||e);
+    if(/ 401$|401/.test(m))setStatus("GitHub did not accept the token (expired or wrong). Make a new one.","err");
+    else if(/ 403$|403|404/.test(m))setStatus("The token has no permission for this repo. It needs Contents: Read and write.","err");
+    else setStatus("Could not save ("+m+"). Use Copy instead.","err");
+  }).then(function(){btn.disabled=false});
+}
+function copy(){
+  var txt=toJSON();
+  function fb(){var ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");setStatus("Copied. Now open times.json on GitHub and paste.","ok")}catch(e){setStatus("Copy failed. Open the Preview and copy by hand.","err")}document.body.removeChild(ta)}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(function(){setStatus("Copied. Now open times.json on GitHub and paste.","ok")},fb);else fb();
+}
+build();
+$("save").onclick=save;
+$("copy").onclick=copy;
+$("open").onclick=function(){window.open(EDIT_URL,"_blank")};
+$("reload").onclick=load;
+$("savetok").onclick=function(){var v=$("tok").value.trim();if(!v)return;try{localStorage.setItem("mt",v)}catch(e){}$("tok").value="";tokState();setStatus("Token saved on this phone.","ok")};
+$("deltok").onclick=function(){try{localStorage.removeItem("mt")}catch(e){}tokState();setStatus("Token removed.","ok")};
+tokState();load();
+</script>
+</body>
+</html>

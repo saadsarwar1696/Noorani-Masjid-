@@ -40,6 +40,13 @@ a{color:#1a56a8}
 <div class="card"><h2>Jamaat times</h2><div id="rows"></div></div>
 <div class="card"><h2>Juma (Friday)</h2><div id="juma"></div></div>
 
+<div class="card"><h2>Night mode (dark screen)</h2>
+  <div class="row"><label>Night mode</label><select id="dkon"><option value="on">On</option><option value="off">Off</option></select></div>
+  <div class="row"><label>Starts after Maghrib jamaat (minutes)</label><input id="dka" type="number" min="0" max="600"></div>
+  <div class="row"><label>Ends after Ishraq start (minutes)</label><input id="dkb" type="number" min="0" max="600"></div>
+  <p class="note">The board turns dark this many minutes after Maghrib jamaat and turns light again this many minutes after Ishraq starts. 0 and 0 means exactly at Maghrib jamaat and exactly at Ishraq start.</p>
+</div>
+
 <div class="card">
   <h2>Save</h2>
   <button id="save">Save to GitHub</button>
@@ -69,6 +76,7 @@ var JUMA=[["khutba","Khutba (main time)"],["khutba1","Khutba 1"],["khutba2","Khu
 var ALL=ROWS.concat(JUMA);
 var DEFT={fajr:"05:00",zohar:"13:30",asr:"17:00",maghrib:"18:00",isha:"20:00",khutba:"13:30",khutba1:"13:30",khutba2:"13:30",khutba3:"13:30",khutba4:"13:30"};
 var state={};
+var DK={on:"on",a:0,b:0};
 var $=function(id){return document.getElementById(id)};
 function pad(n){return (n<10?"0":"")+n}
 function hint(k){return k==="fajr"?"05:00":"13:00"}
@@ -102,6 +110,8 @@ function valueOut(k){
 }
 function toJSON(){
   var lines=ALL.map(function(r){return ' "'+r[0]+'": "'+valueOut(r[0])+'"'});
+  function nm(v,d){v=parseInt(v,10);return isFinite(v)&&v>=0&&v<=600?v:d}
+  lines.push(' "darkMode": "'+(DK.on==="off"?"off":"on")+'"',' "darkAfterMaghrib": '+nm(DK.a,0),' "darkAfterIshraq": '+nm(DK.b,0));
   return "{\n"+lines.join(",\n")+"\n}\n";
 }
 function refreshOut(){$("out").textContent=toJSON()}
@@ -142,7 +152,7 @@ function build(){
   mk(ROWS,$("rows"),true);mk(JUMA,$("juma"),false);
 }
 function showAll(){
-  Array.prototype.forEach.call(document.querySelectorAll(".row"),function(r){r._show()});
+  Array.prototype.forEach.call(document.querySelectorAll(".row"),function(r){if(r._show)r._show()});
   refreshOut();
 }
 function setStatus(msg,cls){var s=$("status");s.textContent=msg;s.className="sub "+(cls||"")}
@@ -150,6 +160,11 @@ function b64d(s){return decodeURIComponent(escape(atob(s.replace(/\n/g,""))))}
 function b64e(s){return btoa(unescape(encodeURIComponent(s)))}
 function applyJSON(j){
   ALL.forEach(function(r){state[r[0]]=readVal(r[0],j[r[0]])});
+  var dv=String(j.darkMode==null?"on":j.darkMode).toLowerCase();
+  DK.on=(dv==="off"||dv==="false"||dv==="no"||dv==="0")?"off":"on";
+  var a=parseInt(j.darkAfterMaghrib,10),b=parseInt(j.darkAfterIshraq,10);
+  DK.a=isFinite(a)&&a>=0&&a<=600?a:0;DK.b=isFinite(b)&&b>=0&&b<=600?b:0;
+  $("dkon").value=DK.on;$("dka").value=DK.a;$("dkb").value=DK.b;
   showAll();
 }
 function load(){
@@ -193,6 +208,10 @@ function copy(){
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(function(){setStatus("Copied. Now open times.json on GitHub and paste.","ok")},fb);else fb();
 }
 build();
+$("dkon").value=DK.on;$("dka").value=DK.a;$("dkb").value=DK.b;
+$("dkon").onchange=function(){DK.on=$("dkon").value;refreshOut()};
+$("dka").oninput=function(){DK.a=$("dka").value;refreshOut()};
+$("dkb").oninput=function(){DK.b=$("dkb").value;refreshOut()};
 $("save").onclick=save;
 $("copy").onclick=copy;
 $("open").onclick=function(){window.open(EDIT_URL,"_blank")};

@@ -31,40 +31,48 @@ summary{font-weight:700;cursor:pointer;padding:6px 0}
 .note{font-size:13px;color:#444;line-height:1.45;margin:6px 0}
 .ok{color:#1b6e2a;font-weight:700}.err{color:var(--red);font-weight:700}
 a{color:#1a56a8}
+.hint{font-size:12px;color:#8a5a00;margin:-4px 0 6px}
+button.big{font-size:20px;padding:16px 14px}
+#status2{text-align:center;font-size:14px;min-height:20px;margin:8px 0 0}
 </style>
 </head>
 <body>
 <h1>Noorani Masjid &ndash; Times</h1>
 <p class="sub" id="status">Loading current times&hellip;</p>
 
-<div class="card"><h2>Jamaat times</h2><div id="rows"></div></div>
-<div class="card"><h2>Azan times</h2><div class="note" style="margin:0 0 6px">Default: 15 minutes before jamaat.</div><div id="azan"></div></div>
+<div id="prayers"></div>
+
+<div class="card"><h2>Maghrib</h2><div class="note" style="margin:0">Automatic. Jamaat is 3 minutes after start. Azan is at start.</div></div>
+
 <div class="card"><h2>Juma (Friday)</h2><div id="juma"></div></div>
 
-<div class="card"><h2>Night mode (dark screen)</h2>
+<div class="card"><details><summary>Night mode</summary>
   <div class="row"><label>Night mode</label><select id="dkon"><option value="on">On</option><option value="off">Off</option></select></div>
   <div class="row"><label>Starts after Maghrib jamaat (minutes)</label><input id="dka" type="number" min="0" max="600"></div>
   <div class="row"><label>Ends after Ishraq start (minutes)</label><input id="dkb" type="number" min="0" max="600"></div>
   <p class="note">The board turns dark this many minutes after Maghrib jamaat and turns light again this many minutes after Ishraq starts. 0 and 0 means exactly at Maghrib jamaat and exactly at Ishraq start.</p>
-</div>
+</details></div>
 
 <div class="card">
-  <h2>Save</h2>
-  <button id="save">Save to GitHub</button>
-  <button id="copy" class="alt">Copy times.json text</button>
-  <button id="open" class="alt">Open times.json on GitHub</button>
-  <button id="reload" class="alt">Reload from GitHub</button>
-  <details>
-    <summary>Preview of times.json</summary>
-    <pre id="out"></pre>
-  </details>
-  <details id="tokbox">
-    <summary>One-tap save setup (optional)</summary>
-    <p class="note">Paste your GitHub token once. It is saved only on this phone and is never part of the page. Without it, use <b>Copy</b>, then <b>Open times.json on GitHub</b>, paste, and commit.</p>
-    <input id="tok" type="password" placeholder="GitHub token" style="width:100%" autocomplete="off">
-    <button id="savetok" class="alt">Save token on this phone</button>
-    <button id="deltok" class="alt">Remove token from this phone</button>
-    <p class="note" id="tokstate"></p>
+  <button id="save" class="big">Save</button>
+  <p id="status2"></p>
+  <details id="more">
+    <summary>More options (copy, reload, token)</summary>
+    <button id="copy" class="alt">Copy times.json text</button>
+    <button id="open" class="alt">Open times.json on GitHub</button>
+    <button id="reload" class="alt">Reload from GitHub</button>
+    <details>
+      <summary>Preview of times.json</summary>
+      <pre id="out"></pre>
+    </details>
+    <details id="tokbox">
+      <summary>One-tap save setup</summary>
+      <p class="note">Paste your GitHub token once. It is saved only on this phone and is never part of the page. Without it, use <b>Copy</b>, then <b>Open times.json on GitHub</b>, paste, and commit.</p>
+      <input id="tok" type="password" placeholder="GitHub token" style="width:100%" autocomplete="off">
+      <button id="savetok" class="alt">Save token on this phone</button>
+      <button id="deltok" class="alt">Remove token from this phone</button>
+      <p class="note" id="tokstate"></p>
+    </details>
   </details>
 </div>
 
@@ -72,11 +80,11 @@ a{color:#1a56a8}
 var O="saadsarwar1696",R="Noorani-Masjid-",B="main",P="times.json";
 var API="https://api.github.com/repos/"+O+"/"+R+"/contents/"+P;
 var EDIT_URL="https://github.com/"+O+"/"+R+"/edit/"+B+"/"+P;
-var ROWS=[["fajr","Fajr"],["zohar","Zohar"],["asr","Asr"],["maghrib","Maghrib"],["isha","Isha"]];
-var JUMA=[["khutba","Khutba (main time)"],["khutba1","Khutba 1"],["khutba2","Khutba 2"],["khutba3","Khutba 3"],["khutba4","Khutba 4"]];
-var AZ=[["fajrAzan","Fajr azan"],["zoharAzan","Zohar azan"],["asrAzan","Asr azan"],["maghribAzan","Maghrib azan"],["ishaAzan","Isha azan"]];
-var ALL=ROWS.concat(JUMA).concat(AZ);
-var DEFT={fajr:"05:00",zohar:"13:30",asr:"17:00",maghrib:"18:00",isha:"20:00",khutba:"13:30",khutba1:"13:30",khutba2:"13:30",khutba3:"13:30",khutba4:"13:30",fajrAzan:"05:30",zoharAzan:"13:15",asrAzan:"17:30",maghribAzan:"18:05",ishaAzan:"20:00"};
+var PRAY=[["fajr","Fajr","fajrAzan"],["zohar","Zohar","zoharAzan"],["asr","Asr","asrAzan"],["isha","Isha","ishaAzan"]];
+var JUMA=[["khutba","Khutba"],["khutba1","Azan"],["khutba2","Khutba 2"],["khutba3","Azan 2"],["khutba4","Khutba 3"]];
+/* Maghrib keys are kept in the file but always saved empty: the board works them out itself. */
+var ALL=[["fajr"],["zohar"],["asr"],["maghrib"],["isha"],["khutba"],["khutba1"],["khutba2"],["khutba3"],["khutba4"],["fajrAzan"],["zoharAzan"],["asrAzan"],["maghribAzan"],["ishaAzan"]];
+var DEFT={fajr:"05:00",zohar:"13:30",asr:"17:00",isha:"20:00",khutba:"13:30",khutba1:"13:30",khutba2:"13:30",khutba3:"13:30",khutba4:"13:30"};
 var state={};
 var DK={on:"on",a:0,b:0};
 var $=function(id){return document.getElementById(id)};
@@ -110,6 +118,7 @@ function fmt(k,hhmm){
   return pm===want?(h12+":"+mm):(h12+":"+mm+(pm?" pm":" am"));
 }
 function valueOut(k){
+  if(k==="maghrib"||k==="maghribAzan")return"";
   var s=state[k];
   if(!s||s.mode==="off")return"";
   if(s.mode==="rel")return(k.indexOf("Azan")>0?"-":"+")+(parseInt(s.rel,10)||0);
@@ -122,51 +131,65 @@ function toJSON(){
   return "{\n"+lines.join(",\n")+"\n}\n";
 }
 function refreshOut(){$("out").textContent=toJSON()}
-function build(){
-  function mk(list,box,allowRel,azan){
-    list.forEach(function(r){
-      var k=r[0],row=document.createElement("div");row.className="row";
-      var lab=document.createElement("label");lab.textContent=r[1];
-      var sel=document.createElement("select");
-      sel.innerHTML=azan?'<option value="rel">Before jamaat</option><option value="time">At time</option>':'<option value="time">At time</option>'+(allowRel?'<option value="rel">After start</option>':'')+'<option value="off">Not set</option>';
-      var tw=document.createElement("span");tw.className="tw";
-      var hs=document.createElement("select"),ms=document.createElement("select"),i;
-      for(i=1;i<=12;i++){hs.innerHTML+='<option value="'+i+'">'+i+'</option>'}
-      for(i=0;i<60;i++){ms.innerHTML+='<option value="'+pad(i)+'">'+pad(i)+'</option>'}
-      tw.appendChild(hs);tw.appendChild(document.createTextNode(":"));tw.appendChild(ms);
-      var n=document.createElement("input");n.type="number";n.min="0";n.max="120";
-      row.appendChild(lab);row.appendChild(sel);row.appendChild(tw);row.appendChild(n);box.appendChild(row);
-      function show(){
-        var s=state[k];sel.value=s.mode;
-        tw.className=s.mode==="time"?"tw":"tw hide";n.className=s.mode==="rel"?"":"hide";
-        if(s.time){var a=s.time.split(":");hs.value=String((+a[0])%12||12);ms.value=a[1]}
-        n.value=s.rel;
-      }
-      function upd(){
-        var h=+hs.value,h24=(k==="fajr"||k==="fajrAzan")?(h%12):((h%12)+12);
-        state[k].time=pad(h24)+":"+ms.value;refreshOut();
-      }
-      sel.onchange=function(){
-        state[k].mode=sel.value;
-        if(sel.value==="time"&&!state[k].time){state[k].time=DEFT[k]||"13:30"}
-        show();refreshOut();
-      };
-      hs.onchange=upd;ms.onchange=upd;
-      n.oninput=function(){state[k].rel=n.value;refreshOut()};
-      row._show=show;
-    });
+function card(title){var c=document.createElement("div");c.className="card";var h=document.createElement("h2");h.textContent=title;c.appendChild(h);$("prayers").appendChild(c);return c}
+function timeRow(k,label,box){
+  var row=document.createElement("div");row.className="row";
+  var lab=document.createElement("label");lab.textContent=label;
+  var tw=document.createElement("span");tw.className="tw";
+  var hs=document.createElement("select"),ms=document.createElement("select"),i;
+  hs.innerHTML='<option value="">--</option>';
+  for(i=1;i<=12;i++){hs.innerHTML+='<option value="'+i+'">'+i+'</option>'}
+  for(i=0;i<60;i++){ms.innerHTML+='<option value="'+pad(i)+'">'+pad(i)+'</option>'}
+  tw.appendChild(hs);tw.appendChild(document.createTextNode(":"));tw.appendChild(ms);
+  row.appendChild(lab);row.appendChild(tw);box.appendChild(row);
+  var hn=document.createElement("div");hn.className="hint hide";box.appendChild(hn);
+  function show(){
+    var s=state[k];
+    if(s.mode==="time"&&s.time){var a=s.time.split(":");hs.value=String((+a[0])%12||12);ms.value=a[1]}
+    else{hs.value="";ms.value="00"}
+    if(s.mode==="rel"){hn.textContent="Now set to "+s.rel+" min after start. Pick a time to replace it.";hn.className="hint"}else{hn.className="hint hide"}
   }
-  mk(ROWS,$("rows"),true);mk(AZ,$("azan"),true,true);mk(JUMA,$("juma"),false);
+  function upd(){
+    if(hs.value===""){state[k].mode="off"}
+    else{
+      var h=+hs.value,h24=(k==="fajr")?(h%12):((h%12)+12);
+      state[k].mode="time";state[k].time=pad(h24)+":"+ms.value;
+    }
+    hn.className="hint hide";refreshOut();
+  }
+  hs.onchange=upd;ms.onchange=upd;
+  row._show=show;
+}
+function azanRow(k,box){
+  var row=document.createElement("div");row.className="row";
+  var lab=document.createElement("label");lab.innerHTML='Azan <span style="font-weight:400">(minutes before)</span>';
+  var n=document.createElement("input");n.type="number";n.min="0";n.max="120";
+  row.appendChild(lab);row.appendChild(n);box.appendChild(row);
+  n.oninput=function(){state[k].mode="rel";state[k].rel=n.value;refreshOut()};
+  row._show=function(){n.value=state[k].rel};
+}
+function build(){
+  PRAY.forEach(function(p){var c=card(p[1]);timeRow(p[0],"Jamaat",c);azanRow(p[2],c)});
+  JUMA.forEach(function(r){timeRow(r[0],r[1],$("juma"))});
 }
 function showAll(){
   Array.prototype.forEach.call(document.querySelectorAll(".row"),function(r){if(r._show)r._show()});
   refreshOut();
 }
-function setStatus(msg,cls){var s=$("status");s.textContent=msg;s.className="sub "+(cls||"")}
+function setStatus(msg,cls){["status","status2"].forEach(function(id){var s=$(id);s.textContent=msg;s.className=(id==="status"?"sub ":"")+(cls||"")})}
+function toMin(t){var a=/^(\d{1,2}):(\d{2})$/.exec(t||"");return a?+a[1]*60+ +a[2]:null}
 function b64d(s){return decodeURIComponent(escape(atob(s.replace(/\n/g,""))))}
 function b64e(s){return btoa(unescape(encodeURIComponent(s)))}
 function applyJSON(j){
   ALL.forEach(function(r){state[r[0]]=readVal(r[0],j[r[0]])});
+  /* an azan saved as an exact time becomes "minutes before jamaat" */
+  PRAY.forEach(function(p){
+    var a=state[p[2]];
+    if(a.mode==="time"){
+      var jm=state[p[0]].mode==="time"?toMin(state[p[0]].time):null,am=toMin(a.time);
+      a.rel=(jm!=null&&am!=null&&am<=jm)?(jm-am):15;a.mode="rel";a.time="";
+    }
+  });
   var dv=String(j.darkMode==null?"on":j.darkMode).toLowerCase();
   DK.on=(dv==="off"||dv==="false"||dv==="no"||dv==="0")?"off":"on";
   var a=parseInt(j.darkAfterMaghrib,10),b=parseInt(j.darkAfterIshraq,10);
@@ -188,7 +211,7 @@ function token(){try{return localStorage.getItem("mt")||""}catch(e){return""}}
 function tokState(){$("tokstate").textContent=token()?"A token is saved on this phone.":"No token saved on this phone."}
 function save(){
   var tk=token();
-  if(!tk){setStatus("No token yet. Use Copy, or set up one-tap save below.","err");$("tokbox").open=true;return}
+  if(!tk){setStatus("No token yet. Use Copy, or set up one-tap save below.","err");$("more").open=true;$("tokbox").open=true;return}
   var btn=$("save");btn.disabled=true;setStatus("Saving\u2026");
   var h={"Authorization":"Bearer "+tk,"Accept":"application/vnd.github+json"};
   fetch(API+"?ref="+B+"&t="+Date.now(),{headers:h}).then(function(r){

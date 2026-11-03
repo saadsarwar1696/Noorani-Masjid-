@@ -59,7 +59,7 @@ body.r180{transform:rotate(180deg)}
 <body>
 <header><div id="mname">Noorani Masjid</div><div id="clock"></div><div id="dates"></div></header>
 <div id="bar"><span id="msg"></span><button id="edit" title="Edit times">&#9998;</button></div>
-<div id="tools"><b>Version 22</b> <span id="jsrc"></span> Auto: Karachi method, Hanafi Asr. Type a time like 1:30 to override; jamaat can be +5 (minutes after start), azan can be -10 (minutes before jamaat); clear a box to go back to auto &nbsp;|&nbsp; Hijri date shift (days): <input id="off" value="0"> <button id="done">Done</button> <button id="rot">Rotate: 0&deg;</button> <button id="reset">Reset all</button> <button id="test">Test blink</button> <button id="test2">Test countdown</button> <button id="dmb">Night: Auto</button> <button id="test3">Test dark</button> <span id="dkinfo"></span></div>
+<div id="tools"><b>Version 23</b> <span id="jsrc"></span> Auto: Karachi method, Hanafi Asr. Type a time like 1:30 to override; jamaat can be +5 (minutes after start), azan can be -10 (minutes before jamaat); clear a box to go back to auto &nbsp;|&nbsp; Hijri date shift (days): <input id="off" value="0"> <button id="done">Done</button> <button id="rot">Rotate: 0&deg;</button> <button id="reset">Reset all</button> <button id="test">Test blink</button> <button id="test2">Test countdown</button> <button id="dmb">Night: Auto</button> <button id="test3">Test dark</button> <span id="dkinfo"></span></div>
 <div id="grid"></div>
 <div id="blk"><div id="bn"></div><div id="bt"></div></div>
 <script>
@@ -103,7 +103,8 @@ let cfg;
 try{cfg=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!cfg||!cfg.o)cfg={o:defO(),off:0};
 let ed=false,force=0,cdT=0;
-let fileJ={};
+let fileJ={},fileOk=false;
+try{fileOk=localStorage.getItem('masjidFileOk')==='1'}catch(e){}
 function dkNorm(on,a,b){a=parseInt(a,10);b=parseInt(b,10);const o=String(on).toLowerCase();return{on:!(on===false||o==="off"||o==="false"||o==="no"||o==="0"),a:(isFinite(a)&&a>=0&&a<=600)?a:0,b:(isFinite(b)&&b>=0&&b<=600)?b:0}}
 let dkCfg=dkNorm(true,0,0),dkForce=0;
 try{const sd=JSON.parse(localStorage.getItem('masjidDark2'));if(sd&&typeof sd==='object')dkCfg=dkNorm(sd.on,sd.a,sd.b)}catch(e){}
@@ -120,8 +121,8 @@ const ap=s=>Math.floor(mins(s)/60)>=12?"PM":"AM";
 const norm=v=>{v=v.trim().replace(/[.\s]/g,":");let m=/^(\d{1,2}):?(\d{2})$/.exec(v);if(!m)return"";let h=+m[1],n=+m[2];return h<24&&n<60?String(h).padStart(2,"0")+":"+String(n).padStart(2,"0"):""};
 function render(){
  $("grid").innerHTML=CARDS.map(([id,name,sub,rows])=>{
-  const sw=id!=="juma",hk=sw?"jamaat":"khutba",sb=sw?"Jamaat":sub,rw=sw?[["start","Start"]].concat(rows.slice(1)):rows;
-  const cell=k=>ed?`<input data-k="${id}.${k}" value="${evd(id,k)}" maxlength="8" placeholder="hh:mm" inputmode="numeric"${fileJ[id+"."+k]?" readonly":""}>`:`<span class="t" data-v="${id}.${k}"></span>`;
+  const sw=id!=="juma",hk=sw?"jamaat":"khutba",sb=sw?"Jamaat":sub,rw=sw?[["azan","Azan"],["start","Start"]].concat(rows.slice(1)):rows;
+  const cell=k=>ed?`<input data-k="${id}.${k}" value="${evd(id,k)}" maxlength="8" placeholder="hh:mm" inputmode="numeric"${((k!=="jamaat"&&k!=="azan"&&id!=="juma")||fileOk)?" readonly":""}>`:`<span class="t" data-v="${id}.${k}"></span>`;
   return `<div class="card" id="c-${id}"><div class="hd"><div><b>${name}</b><i>${sb}</i></div>${cell(hk)}</div>`+
    rw.map(([k,l])=>`<div class="r" data-r="${id}.${k}"><span>${l}</span>${cell(k)}</div>`).join("")+`</div>`}).join("");
  document.querySelectorAll("input[data-k]").forEach(i=>i.onchange=()=>{const[a,b]=i.dataset.k.split("."),key=a+"."+b;let v=i.value.trim();
@@ -129,13 +130,13 @@ function render(){
   if(!v||v===(auto()[a]||{})[b])delete cfg.o[key];else cfg.o[key]=v;save();i.value=evd(a,b)});
  tick();
 }
-const T0=(a,b)=>{const o=fileJ[a+"."+b]||cfg.o[a+"."+b];
+const T0=(a,b)=>{const o=fileJ[a+"."+b]||((b==="jamaat"||b==="azan"||a==="juma")?cfg.o[a+"."+b]:undefined);
  if(b==="azan"&&!(o&&o[0]!=="-")){const j=mins(T(a,"jamaat")),n=o?+o.slice(1):15;return j!=null?hm(j-n):T(a,"start")}
  if(o){if(o[0]==="+"){const s=mins(T(a,"start"));return s==null?"":hm(s+ +o.slice(1))}return o}
  return (auto()[a]||{})[b]||""};
-const T=(a,b)=>{const r=T0(a,b);if(b!=="jamaat")return r;const m=mins(r);if(m==null)return r;if(a==="fajr")return m>=720?hm(m-720):r;return m<720?hm(m+720):r};
+const T=(a,b)=>{const r=T0(a,b);if(b!=="jamaat"&&b!=="azan")return r;const m=mins(r);if(m==null)return r;if(a==="fajr")return m>=720?hm(m-720):r;return m<720?hm(m+720):r};
 const ev=(a,b)=>fileJ[a+"."+b]||cfg.o[a+"."+b]||T(a,b);
-const evd=(a,b)=>{const v=ev(a,b);return /^\d{1,2}:\d{2}$/.test(v)?f12(v):v};
+const evd=(a,b)=>{const v=T(a,b);return /^\d{1,2}:\d{2}$/.test(v)?f12(v):v};
 function p12(v,cur){v=v.trim().toLowerCase();const m=/^(\d{1,2})[:.\s]?(\d{2})\s*([ap])?\.?m?\.?$/.exec(v);if(!m)return"";let h=+m[1],n=+m[2];if(n>59)return"";
  if(m[3]){if(h<1||h>12)return"";h=h%12;if(m[3]==="p")h+=12}
  else if(h>=13||h===0){if(h>23)return""}
@@ -193,9 +194,10 @@ $("test2").onclick=()=>{cdT=Date.now()+59000;tick()};
 function loadTimes(){
  try{const x=new XMLHttpRequest();x.open('GET','times.json?t='+Math.floor(Date.now()/60000),true);
  x.onreadystatechange=function(){if(x.readyState!==4)return;
-  if(x.status===200){try{const j=JSON.parse(x.responseText),PH={fajr:"05:00",zohar:"13:00",asr:"17:00",maghrib:"18:00",isha:"20:00",khutba:"13:00",khutba1:"13:00",khutba2:"13:00",khutba3:"13:00",khutba4:"13:00"},KM={fajr:"fajr.jamaat",zohar:"zohar.jamaat",asr:"asr.jamaat",maghrib:"maghrib.jamaat",isha:"isha.jamaat",khutba:"juma.khutba",khutba1:"juma.k1",khutba2:"juma.k2",khutba3:"juma.k3",khutba4:"juma.k4"},n={};
+  if(x.status===200){try{const j=JSON.parse(x.responseText),PH={fajr:"05:00",zohar:"13:00",asr:"17:00",maghrib:"18:00",isha:"20:00",khutba:"13:00",khutba1:"13:00",khutba2:"13:00",khutba3:"13:00",khutba4:"13:00",fajrAzan:"05:00",zoharAzan:"13:00",asrAzan:"17:00",maghribAzan:"18:00",ishaAzan:"20:00"},KM={fajr:"fajr.jamaat",zohar:"zohar.jamaat",asr:"asr.jamaat",maghrib:"maghrib.jamaat",isha:"isha.jamaat",khutba:"juma.khutba",khutba1:"juma.k1",khutba2:"juma.k2",khutba3:"juma.k3",khutba4:"juma.k4",fajrAzan:"fajr.azan",zoharAzan:"zohar.azan",asrAzan:"asr.azan",maghribAzan:"maghrib.azan",ishaAzan:"isha.azan"},n={};
    Object.keys(PH).forEach(function(p){const v=String(j[p]==null?"":j[p]).trim();if(!v)return;
-    if(/^\+\d{1,3}$/.test(v)){if(p.indexOf("khutba")<0)n[KM[p]]=v}else{const t=p12(v,PH[p]);if(t)n[KM[p]]=t}});
+    if(p.indexOf("Azan")>0){if(/^(-\d{1,3}|\d{1,2})$/.test(v)){n[KM[p]]="-"+v.replace("-","")}else{const t=p12(v,PH[p]);if(t)n[KM[p]]=t}}else if(/^\+\d{1,3}$/.test(v)){if(p.indexOf("khutba")<0)n[KM[p]]=v}else{const t=p12(v,PH[p]);if(t)n[KM[p]]=t}});
+   fileOk=true;try{localStorage.setItem('masjidFileOk','1')}catch(e){}
    dkCfg=dkNorm(j.darkMode===undefined?true:j.darkMode,j.darkAfterMaghrib,j.darkAfterIshraq);
    try{localStorage.setItem('masjidDark2',JSON.stringify(dkCfg))}catch(e){}
    if(JSON.stringify(n)!==JSON.stringify(fileJ)){fileJ=n;try{localStorage.setItem('masjidTimesFile',JSON.stringify(n))}catch(e){}if(!ed)render();else tick()}

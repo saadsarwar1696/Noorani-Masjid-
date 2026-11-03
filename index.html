@@ -59,7 +59,7 @@ body.r180{transform:rotate(180deg)}
 <body>
 <header><div id="mname">Noorani Masjid</div><div id="clock"></div><div id="dates"></div></header>
 <div id="bar"><span id="msg"></span><button id="edit" title="Edit times">&#9998;</button></div>
-<div id="tools"><b>Version 23</b> <span id="jsrc"></span> Auto: Karachi method, Hanafi Asr. Type a time like 1:30 to override; jamaat can be +5 (minutes after start), azan can be -10 (minutes before jamaat); clear a box to go back to auto &nbsp;|&nbsp; Hijri date shift (days): <input id="off" value="0"> <button id="done">Done</button> <button id="rot">Rotate: 0&deg;</button> <button id="reset">Reset all</button> <button id="test">Test blink</button> <button id="test2">Test countdown</button> <button id="dmb">Night: Auto</button> <button id="test3">Test dark</button> <span id="dkinfo"></span></div>
+<div id="tools"><b>Version 25</b> <span id="jsrc"></span> Auto: Karachi method, Hanafi Asr. Type a time like 1:30 to override; jamaat can be +5 (minutes after start), azan can be -10 (minutes before jamaat); clear a box to go back to auto &nbsp;|&nbsp; Hijri date shift (days): <input id="off" value="0"> <button id="done">Done</button> <button id="rot">Rotate: 0&deg;</button> <button id="reset">Reset all</button> <button id="test">Test blink</button> <button id="test2">Test countdown</button> <button id="dmb">Night: Auto</button> <button id="test3">Test dark</button> <span id="dkinfo"></span></div>
 <div id="grid"></div>
 <div id="blk"><div id="bn"></div><div id="bt"></div></div>
 <script>
@@ -74,7 +74,7 @@ const CARDS=[["fajr","Fajr","Start",[["jamaat","Jamaat"],["sunrise","Qaza/Sunris
 ["asr","Asr","Start",[["jamaat","Jamaat"],["hanafi","Start (Hanafi)"],["shafai","Start (Shafai)"],["qaza","Qaza"]]],
 ["maghrib","Maghrib","Start",[["jamaat","Jamaat"],["sunset","Sunset"],["iftaar","Iftaar"],["qaza","Qaza"]]],
 ["isha","Isha","Start",[["jamaat","Jamaat"],["qaza","Qaza"],["tahajjud","Tahajjud"],["sahoor","Sahoor End"]]],
-["juma","Juma","Khutba",[["k1","Khutba 1"],["k2","Khutba 2"],["k3","Khutba 3"],["k4","Khutba 4"]]]];
+["juma","Juma","Khutba",[["k1","Azan"],["k2","Khutba 2"],["k3","Azan 2"],["k4","Khutba 3"]]]];
 const HM=["Muharram","Safar","Rabi ul awwal","Rabi ul aakhir","Jumaad ul oola","Jumaad ul aakhira","Rajab","Shabaan","Ramzaan","Shawwal","Zil Qaada","Zil Hijja"];
 const KEY="masjidBoardV2";
 /* Mumbai (19.0760 N, 72.8777 E), University of Islamic Sciences Karachi (Fajr 18, Isha 18), Hanafi Asr */
@@ -122,7 +122,7 @@ const norm=v=>{v=v.trim().replace(/[.\s]/g,":");let m=/^(\d{1,2}):?(\d{2})$/.exe
 function render(){
  $("grid").innerHTML=CARDS.map(([id,name,sub,rows])=>{
   const sw=id!=="juma",hk=sw?"jamaat":"khutba",sb=sw?"Jamaat":sub,rw=sw?[["azan","Azan"],["start","Start"]].concat(rows.slice(1)):rows;
-  const cell=k=>ed?`<input data-k="${id}.${k}" value="${evd(id,k)}" maxlength="8" placeholder="hh:mm" inputmode="numeric"${((k!=="jamaat"&&k!=="azan"&&id!=="juma")||fileOk)?" readonly":""}>`:`<span class="t" data-v="${id}.${k}"></span>`;
+  const cell=k=>ed?`<input data-k="${id}.${k}" value="${evd(id,k)}" maxlength="8" placeholder="hh:mm" inputmode="numeric"${((k!=="jamaat"&&k!=="azan"&&id!=="juma")||fileOk||id==="maghrib")?" readonly":""}>`:`<span class="t" data-v="${id}.${k}"></span>`;
   return `<div class="card" id="c-${id}"><div class="hd"><div><b>${name}</b><i>${sb}</i></div>${cell(hk)}</div>`+
    rw.map(([k,l])=>`<div class="r" data-r="${id}.${k}"><span>${l}</span>${cell(k)}</div>`).join("")+`</div>`}).join("");
  document.querySelectorAll("input[data-k]").forEach(i=>i.onchange=()=>{const[a,b]=i.dataset.k.split("."),key=a+"."+b;let v=i.value.trim();
@@ -130,7 +130,7 @@ function render(){
   if(!v||v===(auto()[a]||{})[b])delete cfg.o[key];else cfg.o[key]=v;save();i.value=evd(a,b)});
  tick();
 }
-const T0=(a,b)=>{const o=fileJ[a+"."+b]||((b==="jamaat"||b==="azan"||a==="juma")?cfg.o[a+"."+b]:undefined);
+const T0=(a,b)=>{if(a==="maghrib"&&b==="azan")return T0("maghrib","start");if(a==="maghrib"&&b==="jamaat"){const ms=mins(T0("maghrib","start"));return ms==null?"":hm(ms+3)}const o=fileJ[a+"."+b]||((b==="jamaat"||b==="azan"||a==="juma")?cfg.o[a+"."+b]:undefined);
  if(b==="azan"&&!(o&&o[0]!=="-")){const j=mins(T(a,"jamaat")),n=o?+o.slice(1):15;return j!=null?hm(j-n):T(a,"start")}
  if(o){if(o[0]==="+"){const s=mins(T(a,"start"));return s==null?"":hm(s+ +o.slice(1))}return o}
  return (auto()[a]||{})[b]||""};

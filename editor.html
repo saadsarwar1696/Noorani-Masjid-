@@ -81,15 +81,16 @@ var O="saadsarwar1696",R="Noorani-Masjid-",B="main",P="times.json";
 var API="https://api.github.com/repos/"+O+"/"+R+"/contents/"+P;
 var EDIT_URL="https://github.com/"+O+"/"+R+"/edit/"+B+"/"+P;
 var PRAY=[["fajr","Fajr","fajrAzan"],["zohar","Zohar","zoharAzan"],["asr","Asr","asrAzan"],["isha","Isha","ishaAzan"]];
-var JUMA=[["khutba","Khutba"],["khutba1","Azan"],["khutba2","Khutba 2"],["khutba3","Azan 2"],["khutba4","Khutba 3"]];
+var JUMA=[["khutba","Khutba"],["khutba1","Azan"],["khutba2","Khutba 2"],["khutba3","Azan 2"],["khutba4","Eid - ul - Fitr"],["khutba5","Eid - ul - Adha"]];
 /* Maghrib keys are kept in the file but always saved empty: the board works them out itself. */
-var ALL=[["fajr"],["zohar"],["asr"],["maghrib"],["isha"],["khutba"],["khutba1"],["khutba2"],["khutba3"],["khutba4"],["fajrAzan"],["zoharAzan"],["asrAzan"],["maghribAzan"],["ishaAzan"]];
+var ALL=[["fajr"],["zohar"],["asr"],["maghrib"],["isha"],["khutba"],["khutba1"],["khutba2"],["khutba3"],["khutba4"],["khutba5"],["fajrAzan"],["zoharAzan"],["asrAzan"],["maghribAzan"],["ishaAzan"]];
 var DEFT={fajr:"05:00",zohar:"13:30",asr:"17:00",isha:"20:00",khutba:"13:30",khutba1:"13:30",khutba2:"13:30",khutba3:"13:30",khutba4:"13:30"};
 var state={};
+var MORN=["fajr","fajrAzan","khutba4","khutba5"];
 var DK={on:"on",a:0,b:0};
 var $=function(id){return document.getElementById(id)};
 function pad(n){return (n<10?"0":"")+n}
-function hint(k){return (k==="fajr"||k==="fajrAzan")?"05:00":"13:00"}
+function hint(k){return MORN.indexOf(k)>=0?"05:00":"13:00"}
 function p12(v,cur){
   v=String(v).trim().toLowerCase();
   var m=/^(\d{1,2})[:.\s]?(\d{2})\s*([ap])?\.?m?\.?$/.exec(v);
@@ -114,7 +115,7 @@ function readVal(k,v){
   return t?{mode:"time",time:t,rel:5}:{mode:"off",time:"",rel:5};
 }
 function fmt(k,hhmm){
-  var a=hhmm.split(":"),h=+a[0],mm=a[1],pm=h>=12,want=(k!=="fajr"&&k!=="fajrAzan"),h12=h%12||12;
+  var a=hhmm.split(":"),h=+a[0],mm=a[1],pm=h>=12,want=(MORN.indexOf(k)<0),h12=h%12||12;
   return pm===want?(h12+":"+mm):(h12+":"+mm+(pm?" pm":" am"));
 }
 function valueOut(k){
@@ -152,7 +153,7 @@ function timeRow(k,label,box){
   function upd(){
     if(hs.value===""){state[k].mode="off"}
     else{
-      var h=+hs.value,h24=(k==="fajr")?(h%12):((h%12)+12);
+      var h=+hs.value,h24=(MORN.indexOf(k)>=0)?(h%12):((h%12)+12);
       state[k].mode="time";state[k].time=pad(h24)+":"+ms.value;
     }
     hn.className="hint hide";refreshOut();

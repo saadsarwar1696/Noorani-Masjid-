@@ -59,7 +59,7 @@ body.r180{transform:rotate(180deg)}
 <body>
 <header><div id="mname">Noorani Masjid</div><div id="clock"></div><div id="dates"></div></header>
 <div id="bar"><span id="msg"></span><button id="edit" title="Edit times">&#9998;</button></div>
-<div id="tools"><b>Version 25</b> <span id="jsrc"></span> Auto: Karachi method, Hanafi Asr. Type a time like 1:30 to override; jamaat can be +5 (minutes after start), azan can be -10 (minutes before jamaat); clear a box to go back to auto &nbsp;|&nbsp; Hijri date shift (days): <input id="off" value="0"> <button id="done">Done</button> <button id="rot">Rotate: 0&deg;</button> <button id="reset">Reset all</button> <button id="test">Test blink</button> <button id="test2">Test countdown</button> <button id="dmb">Night: Auto</button> <button id="test3">Test dark</button> <span id="dkinfo"></span></div>
+<div id="tools"><b>Version 26</b> <span id="jsrc"></span> Auto: Karachi method, Hanafi Asr. Type a time like 1:30 to override; jamaat can be +5 (minutes after start), azan can be -10 (minutes before jamaat); clear a box to go back to auto &nbsp;|&nbsp; Hijri date shift (days): <input id="off" value="0"> <button id="done">Done</button> <button id="rot">Rotate: 0&deg;</button> <button id="reset">Reset all</button> <button id="test">Test blink</button> <button id="test2">Test countdown</button> <button id="dmb">Night: Auto</button> <button id="test3">Test dark</button> <span id="dkinfo"></span></div>
 <div id="grid"></div>
 <div id="blk"><div id="bn"></div><div id="bt"></div></div>
 <script>
@@ -68,13 +68,13 @@ zohar:{start:"12:24",jamaat:"13:30",zawaal:"12:19",qh:"16:35",qs:"15:43"},
 asr:{start:"16:35",jamaat:"17:45",hanafi:"16:35",shafai:"15:43",qaza:"18:12"},
 maghrib:{start:"18:15",jamaat:"18:20",sunset:"18:12",iftaar:"18:15",qaza:"19:26"},
 isha:{start:"19:26",jamaat:"",qaza:"05:21",tahajjud:"03:29",sahoor:"05:11"},
-juma:{khutba:"13:45",k1:"",k2:"",k3:"",k4:""}};
+juma:{khutba:"13:45",k1:"",k2:"",k3:"",k4:"",k5:""}};
 const CARDS=[["fajr","Fajr","Start",[["jamaat","Jamaat"],["sunrise","Qaza/Sunrise"],["ishraq","Ishraaq"],["chasht","Chaasht"]]],
 ["zohar","Zohar","Start",[["jamaat","Jamaat"],["zawaal","Zawaal"],["qh","Qaza (Hanafi)"],["qs","Qaza (Shafai)"]]],
 ["asr","Asr","Start",[["jamaat","Jamaat"],["hanafi","Start (Hanafi)"],["shafai","Start (Shafai)"],["qaza","Qaza"]]],
 ["maghrib","Maghrib","Start",[["jamaat","Jamaat"],["sunset","Sunset"],["iftaar","Iftaar"],["qaza","Qaza"]]],
 ["isha","Isha","Start",[["jamaat","Jamaat"],["qaza","Qaza"],["tahajjud","Tahajjud"],["sahoor","Sahoor End"]]],
-["juma","Juma","Khutba",[["k1","Azan"],["k2","Khutba 2"],["k3","Azan 2"],["k4","Khutba 3"]]]];
+["juma","Juma","Khutba",[["k1","Azan"],["k2","Khutba 2"],["k3","Azan 2"],["k4","Eid - ul - Fitr"],["k5","Eid - ul - Adha"]]]];
 const HM=["Muharram","Safar","Rabi ul awwal","Rabi ul aakhir","Jumaad ul oola","Jumaad ul aakhira","Rajab","Shabaan","Ramzaan","Shawwal","Zil Qaada","Zil Hijja"];
 const KEY="masjidBoardV2";
 /* Mumbai (19.0760 N, 72.8777 E), University of Islamic Sciences Karachi (Fajr 18, Isha 18), Hanafi Asr */
@@ -194,7 +194,7 @@ $("test2").onclick=()=>{cdT=Date.now()+59000;tick()};
 function loadTimes(){
  try{const x=new XMLHttpRequest();x.open('GET','times.json?t='+Math.floor(Date.now()/60000),true);
  x.onreadystatechange=function(){if(x.readyState!==4)return;
-  if(x.status===200){try{const j=JSON.parse(x.responseText),PH={fajr:"05:00",zohar:"13:00",asr:"17:00",maghrib:"18:00",isha:"20:00",khutba:"13:00",khutba1:"13:00",khutba2:"13:00",khutba3:"13:00",khutba4:"13:00",fajrAzan:"05:00",zoharAzan:"13:00",asrAzan:"17:00",maghribAzan:"18:00",ishaAzan:"20:00"},KM={fajr:"fajr.jamaat",zohar:"zohar.jamaat",asr:"asr.jamaat",maghrib:"maghrib.jamaat",isha:"isha.jamaat",khutba:"juma.khutba",khutba1:"juma.k1",khutba2:"juma.k2",khutba3:"juma.k3",khutba4:"juma.k4",fajrAzan:"fajr.azan",zoharAzan:"zohar.azan",asrAzan:"asr.azan",maghribAzan:"maghrib.azan",ishaAzan:"isha.azan"},n={};
+  if(x.status===200){try{const j=JSON.parse(x.responseText),PH={fajr:"05:00",zohar:"13:00",asr:"17:00",maghrib:"18:00",isha:"20:00",khutba:"13:00",khutba1:"13:00",khutba2:"13:00",khutba3:"13:00",khutba4:"08:00",khutba5:"08:00",fajrAzan:"05:00",zoharAzan:"13:00",asrAzan:"17:00",maghribAzan:"18:00",ishaAzan:"20:00"},KM={fajr:"fajr.jamaat",zohar:"zohar.jamaat",asr:"asr.jamaat",maghrib:"maghrib.jamaat",isha:"isha.jamaat",khutba:"juma.khutba",khutba1:"juma.k1",khutba2:"juma.k2",khutba3:"juma.k3",khutba4:"juma.k4",khutba5:"juma.k5",fajrAzan:"fajr.azan",zoharAzan:"zohar.azan",asrAzan:"asr.azan",maghribAzan:"maghrib.azan",ishaAzan:"isha.azan"},n={};
    Object.keys(PH).forEach(function(p){const v=String(j[p]==null?"":j[p]).trim();if(!v)return;
     if(p.indexOf("Azan")>0){if(/^(-\d{1,3}|\d{1,2})$/.test(v)){n[KM[p]]="-"+v.replace("-","")}else{const t=p12(v,PH[p]);if(t)n[KM[p]]=t}}else if(/^\+\d{1,3}$/.test(v)){if(p.indexOf("khutba")<0)n[KM[p]]=v}else{const t=p12(v,PH[p]);if(t)n[KM[p]]=t}});
    fileOk=true;try{localStorage.setItem('masjidFileOk','1')}catch(e){}

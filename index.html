@@ -20,7 +20,7 @@ header{display:flex;flex-direction:column;align-items:center;padding:0 calc(var(
 #bar{margin:calc(var(--u)*1.5) 0;min-height:calc(var(--u)*6);display:flex;align-items:center;justify-content:space-between;font-size:calc(var(--u)*3.2);font-weight:600;padding:0 calc(var(--u)*1.5);border-radius:4px}
 #bar.mk{background:var(--red);color:#fff;font-size:calc(var(--u)*4);animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:.2}}
-#bar.az{background:var(--cur);color:var(--curink);font-size:calc(var(--u)*4)}
+#bar.az{background:var(--cur);color:var(--curink);font-size:calc(var(--u)*4);animation:blink 1s steps(1) infinite}
 .r.az{background:var(--cur);color:var(--curink);border-radius:4px}
 .card.cur .r.az{background:#fff;color:var(--cur)}
 #msg small{display:block;font-size:.8em;font-weight:500}
@@ -62,7 +62,7 @@ body.r180{transform:rotate(180deg)}
 <body>
 <header><div id="mname">Noorani Masjid</div><div id="clock"></div><div id="dates"></div></header>
 <div id="bar"><span id="msg"></span><button id="edit" title="Edit times">&#9998;</button></div>
-<div id="tools"><b>Version 28</b> <span id="jsrc"></span> Auto: Karachi method, Hanafi Asr. Type a time like 1:30 to override; jamaat can be +5 (minutes after start), azan can be -10 (minutes before jamaat); clear a box to go back to auto &nbsp;|&nbsp; Hijri date shift (days): <input id="off" value="0"> <button id="done">Done</button> <button id="rot">Rotate: 0&deg;</button> <button id="reset">Reset all</button> <button id="test">Test blink</button> <button id="test2">Test countdown</button> <button id="dmb">Night: Auto</button> <button id="test3">Test dark</button> <span id="dkinfo"></span></div>
+<div id="tools"><b>Version 29</b> <span id="jsrc"></span> Auto: Karachi method, Hanafi Asr. Type a time like 1:30 to override; jamaat can be +5 (minutes after start), azan can be -10 (minutes before jamaat); clear a box to go back to auto &nbsp;|&nbsp; Hijri date shift (days): <input id="off" value="0"> <button id="done">Done</button> <button id="rot">Rotate: 0&deg;</button> <button id="reset">Reset all</button> <button id="test">Test blink</button> <button id="test2">Test countdown</button> <button id="dmb">Night: Auto</button> <button id="test3">Test dark</button> <span id="dkinfo"></span></div>
 <div id="grid"></div>
 <div id="blk"><div id="bn"></div><div id="bt"></div></div>
 <script>

@@ -20,6 +20,9 @@ header{display:flex;flex-direction:column;align-items:center;padding:0 calc(var(
 #bar{margin:calc(var(--u)*1.5) 0;min-height:calc(var(--u)*6);display:flex;align-items:center;justify-content:space-between;font-size:calc(var(--u)*3.2);font-weight:600;padding:0 calc(var(--u)*1.5);border-radius:4px}
 #bar.mk{background:var(--red);color:#fff;font-size:calc(var(--u)*4);animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:.2}}
+#bar.az{background:var(--cur);color:var(--curink);font-size:calc(var(--u)*4)}
+.r.az{background:var(--cur);color:var(--curink);border-radius:4px}
+.card.cur .r.az{background:#fff;color:var(--cur)}
 #msg small{display:block;font-size:.8em;font-weight:500}
 #bar.cd{background:var(--cur);color:#fff;font-size:calc(var(--u)*5);font-weight:600}
 @keyframes flash{50%{background:var(--flash);color:var(--red)}}
@@ -59,7 +62,7 @@ body.r180{transform:rotate(180deg)}
 <body>
 <header><div id="mname">Noorani Masjid</div><div id="clock"></div><div id="dates"></div></header>
 <div id="bar"><span id="msg"></span><button id="edit" title="Edit times">&#9998;</button></div>
-<div id="tools"><b>Version 26</b> <span id="jsrc"></span> Auto: Karachi method, Hanafi Asr. Type a time like 1:30 to override; jamaat can be +5 (minutes after start), azan can be -10 (minutes before jamaat); clear a box to go back to auto &nbsp;|&nbsp; Hijri date shift (days): <input id="off" value="0"> <button id="done">Done</button> <button id="rot">Rotate: 0&deg;</button> <button id="reset">Reset all</button> <button id="test">Test blink</button> <button id="test2">Test countdown</button> <button id="dmb">Night: Auto</button> <button id="test3">Test dark</button> <span id="dkinfo"></span></div>
+<div id="tools"><b>Version 28</b> <span id="jsrc"></span> Auto: Karachi method, Hanafi Asr. Type a time like 1:30 to override; jamaat can be +5 (minutes after start), azan can be -10 (minutes before jamaat); clear a box to go back to auto &nbsp;|&nbsp; Hijri date shift (days): <input id="off" value="0"> <button id="done">Done</button> <button id="rot">Rotate: 0&deg;</button> <button id="reset">Reset all</button> <button id="test">Test blink</button> <button id="test2">Test countdown</button> <button id="dmb">Night: Auto</button> <button id="test3">Test dark</button> <span id="dkinfo"></span></div>
 <div id="grid"></div>
 <div id="blk"><div id="bn"></div><div id="bt"></div></div>
 <script>
@@ -172,10 +175,16 @@ function tick(){
   const r=document.querySelector(`[data-r="${row}"]`);if(r)r.classList.toggle("mk",on)});
  const tst=Date.now()<force;if(tst&&!act)act={n:"Sunrise (TEST)",e:T("fajr","ishraq")};
  
- let cd=null;[["fajr","Fajr"],["zohar","Zohar"],["asr","Asr"],["maghrib","Maghrib"],["isha","Isha"]].forEach(([p,n])=>{let m=mins(T(p,"jamaat")),k=false;if(p==="zohar"&&d.getDay()===5){let q=mins(T("juma","khutba"));if(q!=null){if(q<720)q+=720;m=q;k=true}}if(m!=null){const df=m*60-(now*60+sec);if(df>0&&df<=59)cd={n:k?"Juma Khutba":n,df,k}}});
+ let cd=null;[["fajr","Fajr"],["zohar","Zohar"],["asr","Asr"],["maghrib","Maghrib"],["isha","Isha"]].forEach(([p,n])=>{let m=mins(T(p,"jamaat")),k=false;if(p==="zohar"&&d.getDay()===5){let q=mins(T("juma","khutba"));if(q!=null){if(q<720)q+=720;m=q;k=true}}if(m!=null){const df=m*60-(now*60+sec);if(df>0&&df<=59)cd={n:k?"Juma Khutba":n,df,k}}});if(d.getDay()===5){let q2=mins(T("juma","k2"));if(q2!=null){if(q2<720)q2+=720;const d2=q2*60-(now*60+sec);if(d2>0&&d2<=59)cd={n:"Juma Khutba 2",df:d2,k:true}}}
  if(Date.now()<cdT)cd={n:"Test",df:Math.ceil((cdT-Date.now())/1000)};
- const bar=$("bar");bar.classList.toggle("mk",!!act&&!cd);bar.classList.toggle("cd",!!cd);
+ let az=null;document.querySelectorAll(".r.az").forEach(e=>e.classList.remove("az"));
+ [["fajr","Fajr","fajr.azan",0],["zohar","Zohar","zohar.azan",1],["asr","Asr","asr.azan",0],["maghrib","Maghrib","maghrib.azan",0],["isha","Isha","isha.azan",0],["juma","Juma","juma.k1",2],["juma","Juma","juma.k3",3]].forEach(([p,n,key,f])=>{
+  if(f===1&&d.getDay()===5)return;if(f>=2&&d.getDay()!==5)return;
+  const t=T(...key.split("."));let m=mins(t);if(m==null)return;if(f>=2&&m<720)m+=720;
+  if(now===m){const r=document.querySelector(`[data-r="${key}"]`);if(r)r.classList.add("az");if(!az)az=(f===3?"AZAN 2":"AZAN")+" \u2013 "+n.toUpperCase()+" \u2013 "+f12(t)}});
+ const bar=$("bar");bar.classList.toggle("mk",!!act&&!cd);bar.classList.toggle("az",!!az&&!act&&!cd);bar.classList.toggle("cd",!!cd);
  $("blk").classList.toggle("on",!!cd);if(cd){$("bn").textContent=cd.n.toUpperCase()+(cd.k?" IN":" JAMAAT IN");$("bt").innerHTML=fw(String(Math.floor(cd.df/60)).padStart(2,"0")+":"+String(cd.df%60).padStart(2,"0"));$("msg").textContent=""}else if(act)$("msg").textContent="\u26A0 MAKRUH WAQT \u2013 "+act.n+" \u2013 ends "+f12(act.e);
+ else if(az)$("msg").textContent=az;
  else{const ev=[];[["fajr","Fajr"],["zohar","Zohar"],["asr","Asr"],["maghrib","Maghrib"],["isha","Isha"]].forEach(([p,n])=>{
    ev.push([mins(T(p,"jamaat")||T(p,"start")),n,T(p,"jamaat")||T(p,"start"),T(p,"azan")]);});
   const nx=ev.filter(x=>x[0]!=null).sort((a,b)=>a[0]-b[0]);

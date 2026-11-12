@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
@@ -26,7 +27,7 @@ header{display:flex;flex-direction:column;align-items:center;padding:0 calc(var(
 @keyframes flash{50%{background:var(--flash);color:var(--red)}}
 #edit{background:none;border:2px solid var(--red);color:var(--red);border-radius:50%;width:calc(var(--u)*5);height:calc(var(--u)*5);font-size:calc(var(--u)*3);font-weight:700;cursor:pointer;flex:none}
 #grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);grid-gap:calc(var(--u)*2);gap:calc(var(--u)*2);min-height:0}
-.card{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.27);padding:calc(var(--u)*1.2) calc(var(--u)*1.5);display:flex;flex-direction:column;min-height:0}
+.card{border-radius:calc(var(--u)*3);background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.27);padding:calc(var(--u)*1.2) calc(var(--u)*1.5);display:flex;flex-direction:column;min-height:0}
 .card.cur{background:var(--cur);color:var(--curink)}
 .hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid currentColor;flex:1.15}
 .hd b{font-weight:500;font-size:calc(var(--u)*5);line-height:1}.hd i{display:block;font-style:normal;font-size:calc(var(--u)*3.3)}
@@ -60,7 +61,7 @@ body.r180{transform:rotate(180deg)}
 <body>
 <header><div id="mname">Noorani Masjid</div><div id="clock"></div><div id="dates"></div></header>
 <div id="bar"><span id="msg"></span><button id="edit" title="Edit times">&#9998;</button></div>
-<div id="tools"><b>Version 30</b> <span id="jsrc"></span> Auto: Karachi method, Hanafi Asr. Type a time like 1:30 to override; jamaat can be +5 (minutes after start), azan can be -10 (minutes before jamaat); clear a box to go back to auto &nbsp;|&nbsp; Hijri date shift (days): <input id="off" value="0"> <button id="done">Done</button> <button id="rot">Rotate: 0&deg;</button> <button id="reset">Reset all</button> <button id="test">Test blink</button> <button id="test2">Test countdown</button> <button id="dmb">Night: Auto</button> <button id="test3">Test dark</button> <span id="dkinfo"></span></div>
+<div id="tools"><b>Version 31</b> <span id="jsrc"></span> Auto: Karachi method, Hanafi Asr. Type a time like 1:30 to override; jamaat can be +5 (minutes after start), azan can be -10 (minutes before jamaat); clear a box to go back to auto &nbsp;|&nbsp; Hijri date shift (days): <input id="off" value="0"> <button id="done">Done</button> <button id="rot">Rotate: 0&deg;</button> <button id="reset">Reset all</button> <button id="test">Test blink</button> <button id="test2">Test countdown</button> <button id="dmb">Night: Auto</button> <button id="test3">Test dark</button> <span id="dkinfo"></span></div>
 <div id="grid"></div>
 <div id="blk"><div id="bn"></div><div id="bt"></div></div>
 <script>
